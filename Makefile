@@ -185,12 +185,26 @@ appimage: $(LINUXDEPLOY) $(LINUXDEPLOY_GTK_PLUGIN)
 	# Copy icon to hicolor theme so linuxdeploy can find it
 	mkdir -p "$(APPIMAGE_APPDIR)/usr/share/icons/hicolor/256x256/apps"
 	cp bleachbit.png "$(APPIMAGE_APPDIR)/usr/share/icons/hicolor/256x256/apps/bleachbit.png"
-	# Bundle with linuxdeploy and GTK plugin
+	# Run GTK plugin first to set up AppDir (hooks, schemas, loaders, etc.)
 	# DEPLOY_GTK_VERSION must be set because bleachbit is a Python script,
 	# not a compiled binary, so auto-detection of GTK version fails.
 	DEPLOY_GTK_VERSION=3 ./$(LINUXDEPLOY) \
 		--appdir "$(APPIMAGE_APPDIR)" \
-		--plugin gtk \
+		--plugin gtk
+	# Patch the hook file before packaging:
+	# 1. Prepend bundled libraries to LD_LIBRARY_PATH so the AppImage's
+	#    GTK/gdk-pixbuf libraries are used instead of the host system's.
+	#    Without this, the host's gdk-pixbuf ignores GDK_PIXBUF_MODULEDIR
+	#    and cannot find the bundled pixbuf loaders.
+	# 2. Export GDK_PIXBUF_MODULEDIR so gdk-pixbuf can resolve the
+	#    relative loader paths in loaders.cache.
+	sed -i '1s|^|export LD_LIBRARY_PATH="$$APPDIR/usr/lib:$$LD_LIBRARY_PATH"\n|' \
+		"$(APPIMAGE_APPDIR)/apprun-hooks/linuxdeploy-plugin-gtk.sh"
+	echo 'export GDK_PIXBUF_MODULEDIR="$$APPDIR/usr/lib/gdk-pixbuf-2.0/2.10.0/loaders"' \
+		>> "$(APPIMAGE_APPDIR)/apprun-hooks/linuxdeploy-plugin-gtk.sh"
+	# Package the AppDir into an AppImage
+	./$(LINUXDEPLOY) \
+		--appdir "$(APPIMAGE_APPDIR)" \
 		--output appimage
 	# linuxdeploy names output after the desktop file; rename to our convention
 	@if [ -f BleachBit-x86_64.AppImage ] && [ "$(abspath BleachBit-x86_64.AppImage)" != "$(APPIMAGE_OUTPUT_PATH)" ]; then \
