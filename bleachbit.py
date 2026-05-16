@@ -16,6 +16,47 @@ import sys
 have_gui = True
 
 
+def _is_bleachbit_package_parent(path):
+    """Check if the given path contains the bleachbit package."""
+    return (
+        os.path.isfile(os.path.join(path, 'bleachbit', '__init__.py')) and
+        os.path.isfile(os.path.join(path, 'bleachbit', 'Unix.py'))
+    )
+
+
+def _add_posix_share_to_path():
+    """Add the appropriate share directory to sys.path for POSIX systems."""
+    _launcher_dir = os.path.dirname(os.path.abspath(__file__))
+    if _is_bleachbit_package_parent(_launcher_dir):
+        return
+    _appdir = os.environ.get('APPDIR')
+    _share_candidates = []
+    if _appdir:
+        _share_candidates.append(
+            os.path.normpath(os.path.join(_appdir, 'usr/share/')))
+    _share_candidates = [
+        *_share_candidates,
+        os.path.normpath(os.path.join(_launcher_dir, '../share/')),
+        os.path.normpath(os.path.join(_launcher_dir, 'usr/share/')),
+        os.path.normpath('/usr/share/'),
+    ]
+    _seen = set()
+    for _share in _share_candidates:
+        if _share in _seen:
+            continue
+        _seen.add(_share)
+        if _is_bleachbit_package_parent(_share):
+            # This path contains bleachbit/{C,G}LI.py. This section is
+            # unnecessary if installing BleachBit in site-packages.
+            if _share == os.path.normpath('/usr/share/'):
+                print(f"appending {_share}")
+                sys.path.append(_share)
+            else:
+                print(f"inserting {_share}")
+                sys.path.insert(0, _share)
+            break
+
+
 def _apply_fontconfig_backend_preference():
     """On Windows, set PANGOCAIRO_BACKEND=fc if the user chose fontconfig.
 
@@ -34,12 +75,9 @@ def _apply_fontconfig_backend_preference():
 _apply_fontconfig_backend_preference()
 
 if 'posix' == os.name:
-    if os.path.isdir('/usr/share/bleachbit'):
-        # This path contains bleachbit/{C,G}LI.py .  This section is
-        # unnecessary if installing BleachBit in site-packages.
-        sys.path.append('/usr/share/')
+    _add_posix_share_to_path()
 
-    # The two imports from bleachbit must come after sys.path.append(..)
+    # The two imports from bleachbit must come after sys.path is adjusted.
     import bleachbit.Unix
     from bleachbit.Language import get_text as _
 
