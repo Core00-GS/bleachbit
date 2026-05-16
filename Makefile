@@ -48,6 +48,9 @@ clean:
 	@rm -vrf htmlcov .coverage # code coverage reports
 	@rm -vrf *.egg-info # Python package metadata
 	@rm -vrf docker-artifacts # Docker build outputs
+	@rm -rf "$(APPIMAGE_APPDIR)"
+	@rm -f $(LINUXDEPLOY) $(LINUXDEPLOY_GTK_PLUGIN)
+	@rm -f BleachBit-*.AppImage
 
 install:
 	# "binary"
@@ -214,8 +217,3 @@ appimage: $(LINUXDEPLOY) $(LINUXDEPLOY_GTK_PLUGIN)
 	"$(APPIMAGE_OUTPUT_PATH)" --sysinfo
 
 	@echo "* AppImage created: $(APPIMAGE_OUTPUT_PATH)"
-
-clean-appimage:
-	rm -rf "$(APPIMAGE_APPDIR)"
-	rm -f $(LINUXDEPLOY) $(LINUXDEPLOY_GTK_PLUGIN)
-	rm -f BleachBit-*.AppImage
