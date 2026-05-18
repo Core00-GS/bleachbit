@@ -47,7 +47,7 @@ install:
   - '%SZ_EXE% x gettext.zip -ogettext'
 
   - ps: if (-not (Test-Path sqlite.zip)) { Start-FileDownload "https://sqlite.org/2026/sqlite-dll-win-x86-3530100.zip" -FileName sqlite.zip }
-  - ps: $hash = (Get-FileHash sqlite.zip -Algorithm SHA256).Hash; if ($hash -ne 'ddcd4382bf04ee4ca2c1a9d08faa6952fdd5970b194f11253c33b1d7014a0f07') { throw "SHA256 mismatch=$hash" }
+  - ps: $hash = (Get-FileHash sqlite.zip -Algorithm SHA256).Hash; if ($hash -ne '8968DCF378A9888F593FAB4D3454F77A5ED6A0C37F68A2C731EAEEB5A6D639CF') { throw "SHA256 mismatch=$hash" }
   - '%SZ_EXE% x sqlite.zip'
   - 'move /y sqlite3.dll %PYTHON_HOME%\DLLs\'
 #  - ps: if (-not (Test-Path vcredist_x86.exe)) { Start-FileDownload "https://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe" -FileName vcredist_x86.exe }
