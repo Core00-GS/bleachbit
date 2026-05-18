@@ -9,7 +9,7 @@
 Code that is commonly shared throughout BleachBit
 """
 
-from bleachbit import Windows
+
 import gettext
 import locale
 import os
@@ -255,6 +255,7 @@ release_notes_url = "%s/release-notes/%s" \
 update_check_url = "%s/update/%s" % (base_url, APP_VERSION)
 
 # set up environment variables
+from bleachbit import Windows
 Windows.setup_environment()
 
 # Windows-only: case-insensitive file system
