@@ -27,6 +27,10 @@ $(POTFILE): $(SRC) cleanerml.pot
 		--from-code=UTF-8 \
 		$(SRC)
 	sed -i 's/charset=CHARSET/charset=utf-8/g' bleachbit.pot
+	# Remove carriage return characters
+	sed -i 's/\r//g' bleachbit.pot
+	# Convert backslashes to forward slashes in file paths
+	sed -i '/^#:/ s/\\/\//g' bleachbit.pot
 	echo " Words after update: " \
 		`tail -n +20 bleachbit.pot | grep -v ^# | sed "s/\(msgstr\|msgid\)//g" | sort | wc --words`
 
