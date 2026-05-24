@@ -1,19 +1,40 @@
 APP = bleachbit
 POFILES = $(wildcard *.po)
 MOFILES = $(patsubst %.po,%.mo,$(POFILES))
-SRC = $(wildcard ../bleachbit/*.py) ../data/app-menu.ui
+PYSRC = $(wildcard ../bleachbit/*.py)
+UISRC = ../data/app-menu.ui
 POTFILE = $(APP).pot
 
 # Use PYTHON environment variable if available, otherwise default to python3
 PYTHON ?= python3
 
+# Download GNOME gtkbuilder ITS rules on demand (MSYS2 gettext lacks them)
+ITS_URL = https://raw.githubusercontent.com/GNOME/gtk/gtk-3-24/gtk
 
 .PHONY: refresh-po spelling local install clean all
+
+its/gtkbuilder.its:
+	mkdir -p its
+	curl -fsSL -o $@ $(ITS_URL)/gtkbuilder.its
+
+its/gtkbuilder.loc:
+	mkdir -p its
+	curl -fsSL -o $@ $(ITS_URL)/gtkbuilder.loc
 
 cleanerml.pot: ../bleachbit/CleanerML.py ../cleaners/*xml
 	$(PYTHON) ../bleachbit.py --pot
 
-$(POTFILE): $(SRC) cleanerml.pot
+ui.pot: $(UISRC) its/gtkbuilder.its its/gtkbuilder.loc
+	xgettext -o ui.pot \
+		--add-comments=TRANSLATORS \
+		--add-location=file \
+		--keyword="_p:1c,2" \
+		--default-domain=$(APP) \
+		--from-code=UTF-8 \
+		--its=its/gtkbuilder.its \
+		$(UISRC)
+
+$(POTFILE): $(PYSRC) cleanerml.pot ui.pot
 	@echo "* Generating $(APP).pot"
 	echo " Words before update: " \
 		`tail -n +20 bleachbit.pot | grep -v ^# | sed "s/\(msgstr\|msgid\)//g" | sort | wc --words`
@@ -25,7 +46,8 @@ $(POTFILE): $(SRC) cleanerml.pot
 		--keyword="_p:1c,2" \
 		--default-domain=$(APP) \
 		--from-code=UTF-8 \
-		$(SRC)
+		$(PYSRC)
+	msgcat -o $(APP).pot $(APP).pot ui.pot
 	sed -i 's/charset=CHARSET/charset=utf-8/g' bleachbit.pot
 	# Remove carriage return characters
 	sed -i 's/\r//g' bleachbit.pot
@@ -76,8 +98,9 @@ done
 clean:
 	echo "* Cleaning"
 	@rm -fv *.mo
-	@rm -fv $(APP).pot cleanerml.pot
+	@rm -fv $(APP).pot cleanerml.pot ui.pot
 	@rm -rfv ../locale
+	@rm -rfv its
 
 all: $(APP).pot $(MOFILES)
 
