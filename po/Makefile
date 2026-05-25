@@ -25,6 +25,7 @@ its/gtkbuilder.loc:
 
 cleanerml.pot: ../bleachbit/CleanerML.py ../cleaners/*xml
 	$(PYTHON_FIXED) ../bleachbit.py --pot
+	$(PYTHON_FIXED) normalize_po.py cleanerml.pot
 
 ui.pot: $(UISRC) its/gtkbuilder.its its/gtkbuilder.loc
 	@rm -f ui.pot.ok
